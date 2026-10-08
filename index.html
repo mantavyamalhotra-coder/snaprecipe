@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-[#050914]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SnapRecipe AI - Visual Recipe Challenge</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            darkbg: '#050914',
+            darkcard: '#0a1020',
+            cyanaccent: '#00f2fe',
+            blueaccent: '#00a3ff',
+          },
+          boxShadow: {
+            'cyan-glow': '0 0 20px rgba(0, 242, 254, 0.4)',
+            'cyan-btn': '0 0 15px rgba(0, 242, 254, 0.5)',
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #050914; }
+    ::-webkit-scrollbar-thumb { background: rgba(0, 242, 254, 0.3); border-radius: 9999px; }
+
+    .snap-panel {
+      background: rgba(10, 16, 32, 0.9);
+      border: 1px solid rgba(0, 163, 255, 0.2);
+      border-radius: 1.25rem;
+    }
+
+    .challenge-card {
+      background: rgba(8, 14, 28, 0.95);
+      border: 1px solid rgba(0, 163, 255, 0.25);
+      border-left: 4px solid #00f2fe;
+      border-radius: 1.25rem;
+      box-shadow: 0 0 25px -5px rgba(0, 242, 254, 0.15);
+    }
+
+    .cyan-pill-btn {
+      background: #00f2fe;
+      color: #050914;
+      font-weight: 800;
+      border-radius: 9999px;
+      transition: all 0.2s ease;
+    }
+
+    .cyan-rect-btn {
+      background: #00f2fe;
+      color: #050914;
+      font-weight: 700;
+      border-radius: 0.85rem;
+      transition: all 0.2s ease;
+    }
+    .cyan-rect-btn:hover {
+      background: #38bdf8;
+      box-shadow: 0 0 20px rgba(0, 242, 254, 0.6);
+    }
+
+    .snap-input-box {
+      background: rgba(6, 12, 26, 0.9);
+      border: 1.5px solid rgba(0, 163, 255, 0.3);
+      border-radius: 1.25rem;
+    }
+    .snap-input-box:focus-within {
+      border-color: #00f2fe;
+      box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+    }
+  </style>
+</head>
+
+<body class="h-full bg-[#050914] text-slate-100 font-sans relative overflow-x-hidden flex flex-col selection:bg-cyanaccent selection:text-darkbg">
+
+  <div class="relative z-10 flex flex-col min-h-screen">
+    
+    <!-- Header Bar -->
+    <header class="border-b border-cyanaccent/20 bg-[#050914]/90 backdrop-blur-md sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="nextDish()">
+          <div class="w-9 h-9 rounded-xl bg-cyanaccent text-darkbg flex items-center justify-center font-bold text-lg shadow-cyan-btn">
+            <i class="fa-solid fa-utensils"></i>
+          </div>
+          <span class="font-extrabold text-xl tracking-tight text-white font-mono">
+            SNAPRECIPE <span class="text-cyanaccent text-xs px-2 py-0.5 rounded-full bg-cyanaccent/10 border border-cyanaccent/30">AI</span>
+          </span>
+        </div>
+
+        <div class="flex items-center space-x-4">
+          <div class="flex items-center space-x-3 bg-darkcard px-4 py-2 rounded-xl border border-cyanaccent/20 text-xs font-mono">
+            <span class="text-slate-400"><i class="fa-solid fa-fire text-amber-400 mr-1"></i>Streak:</span>
+            <span id="streakCounter" class="text-cyanaccent font-bold">2</span>
+            <span class="text-slate-600">|</span>
+            <span class="text-slate-400"><i class="fa-solid fa-trophy text-amber-400 mr-1"></i>Score:</span>
+            <span id="scoreCounter" class="text-blueaccent font-bold">300</span>
+          </div>
+
+          <button onclick="nextDish()" class="px-3.5 py-2 rounded-xl bg-darkcard hover:bg-slate-900 text-slate-300 hover:text-white border border-cyanaccent/30 text-xs font-bold transition-all flex items-center space-x-2">
+            <i class="fa-solid fa-rotate-right"></i>
+            <span>New Dish</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col justify-center">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
+        <!-- LEFT COLUMN: Image & Revealed Pill -->
+        <div class="lg:col-span-5 flex flex-col justify-between space-y-4">
+          <div class="snap-panel p-4 rounded-2xl flex flex-col items-center justify-center relative flex-grow min-h-[420px] border border-cyanaccent/20">
+            <div class="relative w-full aspect-square rounded-xl overflow-hidden bg-darkbg border border-cyanaccent/20 flex items-center justify-center">
+              
+              <!-- Dish Image -->
+              <img id="secretImage" src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=80" alt="Food Dish" class="w-full h-full object-cover transition-all duration-700 select-none">
+
+              <!-- Revealed Banner -->
+              <div id="revealedBanner" class="absolute top-4 left-4 right-4 z-20 cyan-pill-btn py-3 px-6 text-center font-extrabold text-xs font-mono tracking-wider shadow-cyan-glow uppercase flex items-center justify-center gap-2">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>REVEALED: <span id="revealedItemName">PIZZA</span></span>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Recipe Challenge, Guess Input, Recipe Reveal, Cooking Steps -->
+        <div class="lg:col-span-7 flex flex-col space-y-5 justify-between">
+          
+          <!-- 1. Challenge Card -->
+          <div class="challenge-card p-6 sm:p-8 flex flex-col justify-between space-y-6">
+            <div class="flex items-center justify-between border-b border-cyanaccent/15 pb-4">
+              <div class="flex items-center space-x-2.5">
+                <i class="fa-solid fa-puzzle-piece text-cyanaccent text-lg"></i>
+                <h3 class="font-extrabold tracking-widest uppercase text-xs text-cyanaccent font-mono">
+                  SNAPRECIPE CHALLENGE
+                </h3>
+              </div>
+              <div class="text-xs font-mono text-cyanaccent bg-darkbg/90 px-3 py-1 rounded-full border border-cyanaccent/30">
+                Attempt: <span id="attemptCount">1</span>
+              </div>
+            </div>
+
+            <!-- Recipe Description Prompt -->
+            <div class="py-1">
+              <p id="riddleQuoteText" class="text-xl sm:text-2xl font-bold text-white leading-relaxed tracking-tight">
+                "Forged with artisan dough, rich marinara, and melted mozzarella, I am baked in a wood-fired oven. What dish am I?"
+              </p>
+            </div>
+          </div>
+
+          <!-- 2. Guess Input Bar -->
+          <div class="snap-input-box p-2 flex items-center space-x-3">
+            <div class="pl-3 text-cyanaccent text-lg">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </div>
+            <input 
+              type="text" 
+              id="guessInput" 
+              placeholder="What food or recipe is in the image?" 
+              autocomplete="off"
+              onkeydown="if(event.key === 'Enter') submitGuess()"
+              class="w-full bg-transparent text-white placeholder-slate-500 text-sm font-medium focus:outline-none py-2"
+            />
+            <button 
+              onclick="submitGuess()" 
+              id="btnGuess" 
+              class="cyan-rect-btn px-6 py-3 font-bold text-sm flex items-center space-x-2 flex-shrink-0">
+              <span>Guess</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+
+          <!-- 3. Feedback Banner -->
+          <div id="guessFeedback" class="text-sm font-semibold px-5 py-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 flex items-center space-x-2.5">
+            <i class="fa-solid fa-circle-check text-emerald-400"></i>
+            <span>CORRECT! It's a <span id="feedbackDishName">Pizza</span>! Generated full recipe below:</span>
+          </div>
+
+          <!-- 4. Generated Recipe & Steps Box -->
+          <div class="snap-panel p-6 rounded-2xl flex flex-col space-y-4">
+            <div class="flex items-center justify-between border-b border-cyanaccent/15 pb-3">
+              <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-lightbulb text-amber-400"></i>
+                <h4 class="font-bold text-xs tracking-wider text-slate-200 uppercase font-mono">RECIPE PREPARATION STEPS</h4>
+              </div>
+              <span id="hintUnlockTracker" class="text-xs font-mono text-slate-400">4 of 4 steps unlocked</span>
+            </div>
+
+            <!-- Steps List -->
+            <div id="stepsContainer" class="space-y-2.5">
+              <div class="flex items-start space-x-3 bg-darkcard/80 p-3 rounded-xl border border-cyanaccent/20">
+                <span class="w-6 h-6 rounded-full bg-cyanaccent/20 border border-cyanaccent/40 text-cyanaccent flex items-center justify-center font-bold text-xs flex-shrink-0">1</span>
+                <p class="text-xs text-slate-200">Prepare and stretch pizza dough into a 12-inch circle on parchment paper.</p>
+              </div>
+              <div class="flex items-start space-x-3 bg-darkcard/80 p-3 rounded-xl border border-cyanaccent/20">
+                <span class="w-6 h-6 rounded-full bg-cyanaccent/20 border border-cyanaccent/40 text-cyanaccent flex items-center justify-center font-bold text-xs flex-shrink-0">2</span>
+                <p class="text-xs text-slate-200">Spread rich San Marzano tomato sauce and fresh mozzarella slices evenly.</p>
+              </div>
+              <div class="flex items-start space-x-3 bg-darkcard/80 p-3 rounded-xl border border-cyanaccent/20">
+                <span class="w-6 h-6 rounded-full bg-cyanaccent/20 border border-cyanaccent/40 text-cyanaccent flex items-center justify-center font-bold text-xs flex-shrink-0">3</span>
+                <p class="text-xs text-slate-200">Bake at 500°F (260°C) for 10-12 minutes until crust is crispy and cheese bubbles.</p>
+              </div>
+              <div class="flex items-start space-x-3 bg-darkcard/80 p-3 rounded-xl border border-cyanaccent/20">
+                <span class="w-6 h-6 rounded-full bg-cyanaccent/20 border border-cyanaccent/40 text-cyanaccent flex items-center justify-center font-bold text-xs flex-shrink-0">4</span>
+                <p class="text-xs text-slate-200">Garnish with fresh basil leaves and a drizzle of extra virgin olive oil.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+
+    <footer class="snap-panel rounded-none border-x-0 border-b-0 border-t border-cyanaccent/20 py-4 mt-auto text-center text-xs text-slate-500 font-mono">
+      SnapRecipe AI &copy; 2026
+    </footer>
+
+  </div>
+
+  <script>
+    const DISHES = [
+      {
+        name: "Pizza",
+        image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=80",
+        prompt: "Forged with artisan dough, rich marinara, and melted mozzarella, I am baked in a wood-fired oven. What dish am I?",
+        steps: [
+          "Prepare and stretch pizza dough into a 12-inch circle on parchment paper.",
+          "Spread rich San Marzano tomato sauce and fresh mozzarella slices evenly.",
+          "Bake at 500°F (260°C) for 10-12 minutes until crust is crispy and cheese bubbles.",
+          "Garnish with fresh basil leaves and a drizzle of extra virgin olive oil."
+        ]
+      },
+      {
+        name: "Burger",
+        image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80",
+        prompt: "Layered with a juicy grilled patty, melted cheddar cheese, lettuce, and tomato inside a toasted brioche bun. What dish am I?",
+        steps: [
+          "Season ground beef patty and sear on high heat for 3-4 minutes per side.",
+          "Top patty with cheddar cheese during last minute of cooking to melt.",
+          "Toast brioche bun halves lightly in butter.",
+          "Assemble burger with sauce, lettuce, tomato, patty, and serve warm."
+        ]
+      },
+      {
+        name: "Pasta",
+        image: "https://images.unsplash.com/photo-1621996346565-e3def6164286?auto=format&fit=crop&w=800&q=80",
+        prompt: "Tossed in a pan with rich garlic parmesan cream sauce and garnished with fresh parsley. What dish am I?",
+        steps: [
+          "Boil fettuccine noodles in salted water until al dente.",
+          "Melt butter and sauté minced garlic for 1 minute.",
+          "Stir in heavy cream and fresh grated parmesan cheese until smooth.",
+          "Toss cooked pasta into sauce and garnish with parsley."
+        ]
+      }
+    ];
+
+    let currentIndex = 0;
+    let score = 300;
+    let streak = 2;
+
+    function submitGuess() {
+      const val = document.getElementById('guessInput').value.trim().toLowerCase();
+      const current = DISHES[currentIndex];
+
+      if (val === current.name.toLowerCase()) {
+        score += 100;
+        streak += 1;
+        document.getElementById('scoreCounter').innerText = score;
+        document.getElementById('streakCounter').innerText = streak;
+        document.getElementById('guessFeedback').className = "text-sm font-semibold px-5 py-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 flex items-center space-x-2.5";
+        document.getElementById('guessFeedback').innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i><span>CORRECT! It's a <b>${current.name}</b>! Recipe steps generated below:</span>`;
+      } else {
+        document.getElementById('guessFeedback').className = "text-sm font-semibold px-5 py-3.5 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-300 flex items-center space-x-2.5";
+        document.getElementById('guessFeedback').innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-400"></i><span>Not quite! Try guessing <b>${current.name}</b>!</span>`;
+      }
+    }
+
+    function nextDish() {
+      currentIndex = (currentIndex + 1) % DISHES.length;
+      const current = DISHES[currentIndex];
+
+      document.getElementById('secretImage').src = current.image;
+      document.getElementById('revealedItemName').innerText = current.name.toUpperCase();
+      document.getElementById('feedbackDishName').innerText = current.name;
+      document.getElementById('riddleQuoteText').innerText = `"${current.prompt}"`;
+      document.getElementById('guessInput').value = '';
+
+      const container = document.getElementById('stepsContainer');
+      container.innerHTML = '';
+      current.steps.forEach((step, idx) => {
+        const item = document.createElement('div');
+        item.className = "flex items-start space-x-3 bg-darkcard/80 p-3 rounded-xl border border-cyanaccent/20";
+        item.innerHTML = `
+          <span class="w-6 h-6 rounded-full bg-cyanaccent/20 border border-cyanaccent/40 text-cyanaccent flex items-center justify-center font-bold text-xs flex-shrink-0">${idx + 1}</span>
+          <p class="text-xs text-slate-200">${step}</p>
+        `;
+        container.appendChild(item);
+      });
+    }
+  </script>
+</body>
+</html>
